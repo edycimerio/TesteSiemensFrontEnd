@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { LivroRequest } from '../../models/livro';
 import { AutorResponse } from '../../models/autor';
@@ -8,6 +8,7 @@ import { AutoresService } from '../../services/autoresService';
 import { GenerosService } from '../../services/generosService';
 import { useAppContext } from '../../context/AppContext';
 import Loading from '../../components/Loading';
+import './generos-grid.css';
 
 const LivroForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,30 +23,35 @@ const LivroForm: React.FC = () => {
     generos: []
   });
   
-  // Estado adicional para campos não incluídos no modelo LivroRequest
-  const [isbn, setIsbn] = useState<string>('');
-  const [sinopse, setSinopse] = useState<string>('');
-  const [capa, setCapa] = useState<string>('');
-  const [selectedGeneroId, setSelectedGeneroId] = useState<number>(0);
+  // Estado para controlar os gêneros selecionados
+  const [selectedGeneros, setSelectedGeneros] = useState<number[]>([]);
   
   const [autores, setAutores] = useState<AutorResponse[]>([]);
   const [generos, setGeneros] = useState<GeneroResponse[]>([]);
   const [saving, setSaving] = useState<boolean>(false);
 
+  // Flag para controlar se os dados já foram carregados
+  const [dataLoaded, setDataLoaded] = useState(false);
+
   useEffect(() => {
+    // Só carrega os dados uma vez
+    if (dataLoaded) return;
+    
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Carregar autores e gêneros para os selects
+        // Carrega dados em sequência para evitar muitas requisições simultâneas
+        // Primeiro autores
         const autoresResponse = await AutoresService.getAll(1, 100);
-        const generosResponse = await GenerosService.getAll(1, 100);
-        
         setAutores(autoresResponse.items);
+        
+        // Depois gêneros (sequencial, não paralelo)
+        const generosResponse = await GenerosService.getAll(1, 100);
         setGeneros(generosResponse.items);
         
-        // Se estiver editando, carregar dados do livro
-        if (isEditing) {
-          const livroResponse = await LivrosService.getDetalhes(parseInt(id!));
+        // Se estiver editando, carrega os detalhes do livro
+        if (isEditing && id) {
+          const livroResponse = await LivrosService.getDetalhes(parseInt(id));
           setFormData({
             titulo: livroResponse.titulo,
             ano: livroResponse.ano,
@@ -53,16 +59,17 @@ const LivroForm: React.FC = () => {
             generos: livroResponse.generos.map(g => g.id)
           });
           
-          // Definir os campos adicionais
-          // Usando type assertion para acessar propriedades que podem não estar definidas no tipo
-          const livroData = livroResponse as any;
-          setIsbn(livroData.isbn || '');
-          setSinopse(livroData.sinopse || '');
-          setCapa(livroData.capa || '');
-          if (livroResponse.generos.length > 0) {
-            setSelectedGeneroId(livroResponse.generos[0].id);
-          }
+          // Definir os gêneros selecionados
+          const generosIds = livroResponse.generos.map(g => g.id);
+          setSelectedGeneros(generosIds);
+          setFormData(prev => ({
+            ...prev,
+            generos: generosIds
+          }));
         }
+        
+        // Marca que os dados foram carregados
+        setDataLoaded(true);
       } catch (err) {
         console.error('Erro ao carregar dados:', err);
         showAlert('Não foi possível carregar os dados necessários. Por favor, tente novamente.', 'error');
@@ -72,7 +79,7 @@ const LivroForm: React.FC = () => {
     };
     
     fetchData();
-  }, [id, isEditing, setLoading, showAlert]);
+  }, [id, isEditing, dataLoaded, setLoading, showAlert]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -93,15 +100,28 @@ const LivroForm: React.FC = () => {
         ...prev,
         autorId: parseInt(value) || 0
       }));
-    } else if (name === 'generoId') {
-      setSelectedGeneroId(parseInt(value) || 0);
-    } else if (name === 'isbn') {
-      setIsbn(value);
-    } else if (name === 'sinopse') {
-      setSinopse(value);
-    } else if (name === 'capa') {
-      setCapa(value);
+    
     }
+  };
+
+  // Função para alternar a seleção de um gênero
+  const toggleGenero = (generoId: number) => {
+    const isSelected = selectedGeneros.includes(generoId);
+    let newSelectedGeneros: number[];
+    
+    if (isSelected) {
+      // Remover o gênero se já estiver selecionado
+      newSelectedGeneros = selectedGeneros.filter(id => id !== generoId);
+    } else {
+      // Adicionar o gênero se não estiver selecionado
+      newSelectedGeneros = [...selectedGeneros, generoId];
+    }
+    
+    setSelectedGeneros(newSelectedGeneros);
+    setFormData(prev => ({
+      ...prev,
+      generos: newSelectedGeneros
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,48 +133,43 @@ const LivroForm: React.FC = () => {
       return;
     }
     
-    if (selectedGeneroId === 0) {
-      showAlert('Por favor, selecione um gênero.', 'warning');
+    if (selectedGeneros.length === 0) {
+      showAlert('Por favor, selecione pelo menos um gênero.', 'warning');
       return;
     }
     
-    // Adicionar o gênero selecionado ao array de gêneros
-    const livroData = {
-      ...formData,
-      generos: [selectedGeneroId]
-    };
-    
     setSaving(true);
-    
     try {
+      // Preparar dados para envio
+      const livroData = {
+        ...formData,
+        generos: selectedGeneros // Enviar todos os gêneros selecionados
+      };
+      
       if (isEditing) {
+        // Atualizar livro existente
         await LivrosService.update(parseInt(id!), livroData);
         showAlert('Livro atualizado com sucesso!', 'success');
       } else {
+        // Criar novo livro
         await LivrosService.create(livroData);
         showAlert('Livro criado com sucesso!', 'success');
+        
+        // Limpar formulário após criação
         setFormData({
           titulo: '',
           ano: new Date().getFullYear(),
           autorId: 0,
           generos: []
         });
-        setIsbn('');
-        setSinopse('');
-        setCapa('');
-        setSelectedGeneroId(0);
+        setSelectedGeneros([]);
       }
       
-      // Redirecionar após um breve delay para mostrar a mensagem de sucesso
-      setTimeout(() => {
-        navigate('/livros');
-      }, 2000);
+      // Redirecionar para a lista de livros
+      navigate('/livros');
     } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.message) {
-        showAlert(`Erro: ${err.response.data.message}`, 'error');
-      } else {
-        showAlert('Ocorreu um erro ao salvar o livro. Por favor, tente novamente.', 'error');
-      }
+      console.error('Erro ao salvar livro:', err);
+      showAlert('Não foi possível salvar o livro. Por favor, tente novamente.', 'error');
     } finally {
       setSaving(false);
     }
@@ -166,8 +181,6 @@ const LivroForm: React.FC = () => {
 
   return (
     <div className="livro-form">
-
-      
       <h1 className="page-title">{isEditing ? 'Editar Livro' : 'Novo Livro'}</h1>
       
       <form onSubmit={handleSubmit} className="form">
@@ -185,35 +198,19 @@ const LivroForm: React.FC = () => {
           />
         </div>
         
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="ano">Ano de Publicação *</label>
-            <input
-              type="number"
-              id="ano"
-              name="ano"
-              value={formData.ano}
-              onChange={handleChange}
-              required
-              min="1000"
-              max={new Date().getFullYear() + 5}
-              className="form-control"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="isbn">ISBN *</label>
-            <input
-              type="text"
-              id="isbn"
-              name="isbn"
-              value={isbn}
-              onChange={handleChange}
-              required
-              className="form-control"
-              placeholder="ISBN do livro"
-            />
-          </div>
+        <div className="form-group">
+          <label htmlFor="ano">Ano de Publicação *</label>
+          <input
+            type="number"
+            id="ano"
+            name="ano"
+            value={formData.ano}
+            onChange={handleChange}
+            required
+            min="1000"
+            max={new Date().getFullYear() + 5}
+            className="form-control"
+          />
         </div>
         
         <div className="form-row">
@@ -233,54 +230,29 @@ const LivroForm: React.FC = () => {
               ))}
             </select>
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="generoId">Gênero *</label>
-            <select
-              id="generoId"
-              name="generoId"
-              value={selectedGeneroId}
-              onChange={handleChange}
-              required
-              className="form-control"
-            >
-              <option value={0}>Selecione um gênero</option>
+        </div>
+        
+        <div className="form-group">
+          <label>Gêneros *</label>
+          <div className="mt-2 mb-4">
+            <p className="text-sm text-gray-600 mb-2">
+              Selecione pelo menos um gênero (clique para selecionar/desselecionar)
+            </p>
+            <div className="generos-grid">
               {generos.map(genero => (
-                <option key={genero.id} value={genero.id}>{genero.nome}</option>
+                <div 
+                  key={genero.id} 
+                  className={`genero-item ${selectedGeneros.includes(genero.id) ? 'selected' : ''}`}
+                  onClick={() => toggleGenero(genero.id)}
+                >
+                  {genero.nome}
+                </div>
               ))}
-            </select>
-          </div>
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="capa">URL da Capa</label>
-          <input
-            type="url"
-            id="capa"
-            name="capa"
-            value={capa}
-            onChange={handleChange}
-            className="form-control"
-            placeholder="URL da imagem de capa"
-          />
-          {capa && (
-            <div className="capa-preview mt-2">
-              <img src={capa} alt="Prévia da capa" style={{ maxHeight: '100px' }} />
             </div>
-          )}
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="sinopse">Sinopse</label>
-          <textarea
-            id="sinopse"
-            name="sinopse"
-            value={sinopse}
-            onChange={handleChange}
-            className="form-control"
-            rows={5}
-            placeholder="Sinopse do livro"
-          />
+            {selectedGeneros.length === 0 && (
+              <p className="text-sm text-red-500 mt-1">Por favor, selecione pelo menos um gênero</p>
+            )}
+          </div>
         </div>
         
         <div className="form-actions">

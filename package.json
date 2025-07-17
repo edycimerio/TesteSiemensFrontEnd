@@ -19,7 +19,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start:clean": "powershell -Command \"for ($i=0; $i -lt 10; $i++) { try { $null = Get-Process -Id (Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction Stop; Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess -Force; Write-Host \\\"Processo na porta 3000 finalizado.\\\" } catch { Write-Host \\\"Nenhum processo encontrado na porta 3000.\\\" } }\" && react-scripts start"
   },
   "eslintConfig": {
     "extends": [
