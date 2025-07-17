@@ -8,8 +8,9 @@ import { useAppContext } from '../../context/AppContext';
 import Loading from '../../components/Loading';
 
 const AutoresList: React.FC = () => {
-  const { showAlert, setLoading, loading } = useAppContext();
+  const { showAlert, autoresCache, setAutoresCache } = useAppContext();
   const [autores, setAutores] = useState<AutorResponse[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -21,17 +22,61 @@ const AutoresList: React.FC = () => {
   // Carregar autores ao montar o componente e quando a página mudar
   useEffect(() => {
     fetchAutores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
-  const fetchAutores = async () => {
+  const fetchAutores = async (retry = false) => {
+    // Verificar se já temos os dados em cache para esta página
+    const cachedData = autoresCache.filter(autor => autor.page === currentPage);
+    
+    if (cachedData.length > 0) {
+      // Usar dados do cache
+      setAutores(cachedData.map(item => item.data));
+      setTotalPages(cachedData[0].totalPages);
+      return;
+    }
+    
     setLoading(true);
     try {
+      console.log('Iniciando busca de autores...');
       const response: AutorPaginatedResponse = await AutoresService.getAll(currentPage, pageSize);
+      console.log('Dados recebidos:', response);
+      
       setAutores(response.items);
       setTotalPages(response.totalPages);
       setError(null);
-    } catch (err) {
+      
+      // Atualizar o cache com os novos dados
+      const newCacheItems = response.items.map(autor => ({
+        id: autor.id,
+        page: currentPage,
+        data: autor,
+        totalPages: response.totalPages
+      }));
+      
+      // Manter apenas os itens de outras páginas e adicionar os novos
+      const filteredCache = autoresCache.filter(autor => autor.page !== currentPage);
+      setAutoresCache([...filteredCache, ...newCacheItems]);
+    } catch (err: any) {
       console.error('Erro ao carregar autores:', err);
+      
+      // Informações detalhadas do erro para depuração
+      if (err.response) {
+        console.error('Status do erro:', err.response.status);
+        console.error('Dados do erro:', err.response.data);
+      } else if (err.request) {
+        console.error('Sem resposta do servidor. Detalhes:', err.request);
+      } else {
+        console.error('Erro na configuração da requisição:', err.message);
+      }
+      
+      // Se for o primeiro erro e não estiver tentando novamente, tentar uma vez mais
+      if (!retry) {
+        console.log('Tentando novamente...');
+        setTimeout(() => fetchAutores(true), 1000);
+        return;
+      }
+      
       const errorMsg = 'Não foi possível carregar a lista de autores. Por favor, tente novamente mais tarde.';
       setError(errorMsg);
       showAlert(errorMsg, 'error');
@@ -56,6 +101,11 @@ const AutoresList: React.FC = () => {
     try {
       await AutoresService.delete(autorToDelete);
       showAlert('Autor excluído com sucesso!', 'success');
+      
+      // Remover do cache
+      const updatedCache = autoresCache.filter(autor => autor.id !== autorToDelete);
+      setAutoresCache(updatedCache);
+      
       fetchAutores(); // Recarregar a lista após exclusão
     } catch (err: any) {
       if (err.response && err.response.status === 400) {
@@ -78,6 +128,8 @@ const AutoresList: React.FC = () => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
   };
+
+
 
   return (
     <div className="autores-list">

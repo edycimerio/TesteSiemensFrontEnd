@@ -3,6 +3,30 @@ import { AutorResponse } from '../models/autor';
 import { GeneroResponse } from '../models/genero';
 import { LivroResponse } from '../models/livro';
 
+// Interface para o cache de autores com paginação
+interface CachedAutor {
+  id: number;
+  page: number;
+  data: AutorResponse;
+  totalPages: number;
+}
+
+// Interface para o cache de gêneros com paginação
+interface CachedGenero {
+  id: number;
+  page: number;
+  data: GeneroResponse;
+  totalPages: number;
+}
+
+// Interface para o cache de livros com paginação
+interface CachedLivro {
+  id: number;
+  page: number;
+  data: LivroResponse;
+  totalPages: number;
+}
+
 interface AlertState {
   message: string | null;
   type: 'success' | 'error' | 'warning';
@@ -16,12 +40,12 @@ interface AppContextType {
   hideAlert: () => void;
   
   // Cache de dados
-  autoresCache: AutorResponse[];
-  setAutoresCache: (autores: AutorResponse[]) => void;
-  generosCache: GeneroResponse[];
-  setGenerosCache: (generos: GeneroResponse[]) => void;
-  livrosCache: LivroResponse[];
-  setLivrosCache: (livros: LivroResponse[]) => void;
+  autoresCache: CachedAutor[];
+  setAutoresCache: (autores: CachedAutor[]) => void;
+  generosCache: CachedGenero[];
+  setGenerosCache: (generos: CachedGenero[]) => void;
+  livrosCache: CachedLivro[];
+  setLivrosCache: (livros: CachedLivro[]) => void;
   
   // Estado de carregamento global
   loading: boolean;
@@ -51,9 +75,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   });
   
   // Cache de dados
-  const [autoresCache, setAutoresCache] = useState<AutorResponse[]>([]);
-  const [generosCache, setGenerosCache] = useState<GeneroResponse[]>([]);
-  const [livrosCache, setLivrosCache] = useState<LivroResponse[]>([]);
+  const [autoresCache, setAutoresCache] = useState<CachedAutor[]>([]);
+  const [generosCache, setGenerosCache] = useState<CachedGenero[]>([]);
+  const [livrosCache, setLivrosCache] = useState<CachedLivro[]>([]);
   
   // Estado de carregamento global
   const [loading, setLoading] = useState<boolean>(false);

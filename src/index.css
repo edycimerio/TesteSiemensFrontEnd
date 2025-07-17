@@ -656,14 +656,26 @@ code {
   margin-top: 1.5rem;
 }
 
-.btn-primary {
-  display: inline-block;
-  background-color: #3498db;
-  color: white;
-  padding: 0.5rem 1rem;
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 1rem;
   border-radius: 4px;
   text-decoration: none;
   transition: background-color 0.3s ease;
+  font-size: 16px;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #3498db;
+  color: white;
 }
 
 .btn-primary:hover {
@@ -671,17 +683,28 @@ code {
 }
 
 .btn-secondary {
-  display: inline-block;
   background-color: #6c757d;
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
 }
 
 .btn-secondary:hover {
   background-color: #5a6268;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+/* Estilo para grupo de botões */
+.btn-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 /* Not Found Page */

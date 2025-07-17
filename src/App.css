@@ -50,6 +50,24 @@ main {
   width: 100%;
 }
 
+/* Espaçamento entre botões */
+.mr-3 {
+  margin-right: 15px;
+}
+
+.ml-3 {
+  margin-left: 15px;
+}
+
+/* Estilo para botões na mesma linha */
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 20px;
+  gap: 15px;
+}
+
 footer {
   background-color: #f5f5f5;
   padding: 10px;

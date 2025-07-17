@@ -8,9 +8,9 @@ import { LivrosService } from '../services/livrosService';
 const Home: React.FC = () => {
   // Usar o cache do AppContext para evitar buscas repetidas
   const { autoresCache, generosCache, livrosCache, setAutoresCache, setGenerosCache, setLivrosCache } = useAppContext();
-  const [totalAutores, setTotalAutores] = useState<number | null>(autoresCache.length > 0 ? autoresCache.length : null);
-  const [totalGeneros, setTotalGeneros] = useState<number | null>(generosCache.length > 0 ? generosCache.length : null);
-  const [totalLivros, setTotalLivros] = useState<number | null>(livrosCache.length > 0 ? livrosCache.length : null);
+  const [totalAutores, setTotalAutores] = useState<number | null>(autoresCache.length > 0 ? autoresCache[0].totalPages : null);
+  const [totalGeneros, setTotalGeneros] = useState<number | null>(generosCache.length > 0 ? generosCache[0].totalPages : null);
+  const [totalLivros, setTotalLivros] = useState<number | null>(livrosCache.length > 0 ? livrosCache[0].totalPages : null);
   
   // Buscar dados apenas uma vez quando o componente montar e se não estiverem em cache
   useEffect(() => {
@@ -24,7 +24,13 @@ const Home: React.FC = () => {
             setTotalAutores(response.totalCount);
             // Atualizar cache se tivermos dados completos
             if (response.items.length > 0) {
-              setAutoresCache(response.items);
+              const cachedItems = response.items.map(autor => ({
+                id: autor.id,
+                page: 1,
+                data: autor,
+                totalPages: response.totalCount
+              }));
+              setAutoresCache(cachedItems);
             }
             return response;
           })
@@ -36,7 +42,13 @@ const Home: React.FC = () => {
           .then(response => {
             setTotalGeneros(response.totalCount);
             if (response.items.length > 0) {
-              setGenerosCache(response.items);
+              const cachedItems = response.items.map(genero => ({
+                id: genero.id,
+                page: 1,
+                data: genero,
+                totalPages: response.totalCount
+              }));
+              setGenerosCache(cachedItems);
             }
             return response;
           })
@@ -48,7 +60,13 @@ const Home: React.FC = () => {
           .then(response => {
             setTotalLivros(response.totalCount);
             if (response.items.length > 0) {
-              setLivrosCache(response.items);
+              const cachedItems = response.items.map(livro => ({
+                id: livro.id,
+                page: 1,
+                data: livro,
+                totalPages: response.totalCount
+              }));
+              setLivrosCache(cachedItems);
             }
             return response;
           })

@@ -8,7 +8,7 @@ import Loading from '../../components/Loading';
 const AutorForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showAlert, setLoading, loading } = useAppContext();
+  const { showAlert, autoresCache, setAutoresCache } = useAppContext();
   const isEditing = !!id;
   
   const [formData, setFormData] = useState<AutorRequest>({
@@ -17,30 +17,53 @@ const AutorForm: React.FC = () => {
     biografia: ''
   });
   
+  const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
 
   useEffect(() => {
     if (isEditing) {
-      const fetchAutor = async () => {
-        setLoading(true);
-        try {
-          const response = await AutoresService.getDetalhes(parseInt(id));
-          setFormData({
-            nome: response.nome,
-            dataNascimento: formatDateForInput(response.dataNascimento),
-            biografia: response.biografia || ''
-          });
-        } catch (err) {
-          console.error('Erro ao carregar autor:', err);
-          showAlert('Não foi possível carregar os dados do autor. Por favor, tente novamente.', 'error');
-        } finally {
-          setLoading(false);
-        }
-      };
+      // Verificar se temos o autor em cache
+      const cachedAutor = autoresCache.find(autor => autor.id === parseInt(id));
       
-      fetchAutor();
+      if (cachedAutor) {
+        // Usar dados do cache
+        setFormData({
+          nome: cachedAutor.data.nome,
+          dataNascimento: formatDateForInput(cachedAutor.data.dataNascimento),
+          biografia: cachedAutor.data.biografia || ''
+        });
+      } else {
+        // Buscar dados da API
+        const fetchAutor = async () => {
+          setLoading(true);
+          try {
+            const response = await AutoresService.getDetalhes(parseInt(id));
+            setFormData({
+              nome: response.nome,
+              dataNascimento: formatDateForInput(response.dataNascimento),
+              biografia: response.biografia || ''
+            });
+            
+            // Adicionar ao cache
+            setAutoresCache([...autoresCache, {
+              id: response.id,
+              page: 1, // Página padrão
+              data: response,
+              totalPages: 1 // Valor padrão
+            }]);
+          } catch (err) {
+            console.error('Erro ao carregar autor:', err);
+            showAlert('Não foi possível carregar os dados do autor. Por favor, tente novamente.', 'error');
+          } finally {
+            setLoading(false);
+          }
+        };
+        
+        fetchAutor();
+      }
     }
-  }, [id, isEditing, setLoading, showAlert]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isEditing]);
 
   const formatDateForInput = (dateString: string): string => {
     const date = new Date(dateString);
@@ -63,9 +86,36 @@ const AutorForm: React.FC = () => {
       if (isEditing) {
         await AutoresService.update(parseInt(id), formData);
         showAlert('Autor atualizado com sucesso!', 'success');
+        
+        // Atualizar o cache
+        const updatedCache = autoresCache.map(item => {
+          if (item.id === parseInt(id)) {
+            return {
+              ...item,
+              data: {
+                ...item.data,
+                nome: formData.nome,
+                biografia: formData.biografia || null,
+                dataNascimento: formData.dataNascimento
+              }
+            };
+          }
+          return item;
+        });
+        setAutoresCache(updatedCache);
       } else {
-        await AutoresService.create(formData);
+        // Criar novo autor
+        const response = await AutoresService.create(formData);
         showAlert('Autor criado com sucesso!', 'success');
+        
+        // Adicionar ao cache
+        setAutoresCache([...autoresCache, {
+          id: response.id,
+          page: 1,
+          data: response,
+          totalPages: autoresCache.length > 0 ? autoresCache[0].totalPages : 1
+        }]);
+        
         setFormData({
           nome: '',
           dataNascimento: '',

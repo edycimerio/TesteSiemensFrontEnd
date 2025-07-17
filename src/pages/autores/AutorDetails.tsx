@@ -9,8 +9,9 @@ import Loading from '../../components/Loading';
 const AutorDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showAlert, setLoading, loading } = useAppContext();
+  const { showAlert, autoresCache, setAutoresCache } = useAppContext();
   const [autor, setAutor] = useState<AutorDetalhesResponse | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
 
@@ -18,11 +19,31 @@ const AutorDetails: React.FC = () => {
     if (!id) return;
     
     const fetchAutor = async () => {
+      // Verificar se temos o autor básico em cache
+      const cachedAutor = autoresCache.find(autor => autor.id === parseInt(id));
+      
       setLoading(true);
       try {
         const response = await AutoresService.getDetalhes(parseInt(id));
         setAutor(response);
         setError(null);
+        
+        // Atualizar o cache com os dados detalhados
+        if (cachedAutor) {
+          const updatedCache = autoresCache.map(item => {
+            if (item.id === parseInt(id)) {
+              return {
+                ...item,
+                data: {
+                  ...item.data,
+                  biografia: response.biografia
+                }
+              };
+            }
+            return item;
+          });
+          setAutoresCache(updatedCache);
+        }
       } catch (err) {
         console.error('Erro ao carregar detalhes do autor:', err);
         setError('Não foi possível carregar os detalhes do autor. Por favor, tente novamente mais tarde.');
@@ -34,7 +55,8 @@ const AutorDetails: React.FC = () => {
     };
 
     fetchAutor();
-  }, [id, setLoading, showAlert]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleDeleteClick = () => {
     setDeleteModalOpen(true);
