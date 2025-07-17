@@ -28,7 +28,8 @@ const Home: React.FC = () => {
                 id: autor.id,
                 page: 1,
                 data: autor,
-                totalPages: response.totalCount
+                totalPages: response.totalPages,
+                totalCount: response.totalCount
               }));
               setAutoresCache(cachedItems);
             }
@@ -46,7 +47,8 @@ const Home: React.FC = () => {
                 id: genero.id,
                 page: 1,
                 data: genero,
-                totalPages: response.totalCount
+                totalPages: response.totalPages,
+                totalCount: response.totalCount
               }));
               setGenerosCache(cachedItems);
             }
@@ -64,7 +66,8 @@ const Home: React.FC = () => {
                 id: livro.id,
                 page: 1,
                 data: livro,
-                totalPages: response.totalCount
+                totalPages: response.totalPages,
+                totalCount: response.totalCount
               }));
               setLivrosCache(cachedItems);
             }

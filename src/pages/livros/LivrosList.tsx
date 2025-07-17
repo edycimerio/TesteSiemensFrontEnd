@@ -23,6 +23,7 @@ const LivrosList: React.FC = () => {
   // Carregar livros ao montar o componente e quando a página mudar
   useEffect(() => {
     fetchLivros();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const fetchLivros = async () => {

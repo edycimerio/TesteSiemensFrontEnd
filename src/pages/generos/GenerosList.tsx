@@ -22,6 +22,7 @@ const GenerosList: React.FC = () => {
   // Carregar gêneros ao montar o componente e quando a página mudar
   useEffect(() => {
     fetchGeneros();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const fetchGeneros = async () => {

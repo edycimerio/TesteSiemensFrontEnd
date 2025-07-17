@@ -49,7 +49,8 @@ const AutorForm: React.FC = () => {
               id: response.id,
               page: 1, // Página padrão
               data: response,
-              totalPages: 1 // Valor padrão
+              totalPages: 1, // Valor padrão
+              totalCount: autoresCache.length > 0 ? autoresCache[0].totalCount : 0 // Usar valor do cache ou 0
             }]);
           } catch (err) {
             console.error('Erro ao carregar autor:', err);
@@ -113,7 +114,8 @@ const AutorForm: React.FC = () => {
           id: response.id,
           page: 1,
           data: response,
-          totalPages: autoresCache.length > 0 ? autoresCache[0].totalPages : 1
+          totalPages: autoresCache.length > 0 ? autoresCache[0].totalPages : 1,
+          totalCount: autoresCache.length > 0 ? autoresCache[0].totalCount : 0 // Usar valor do cache ou 0
         }]);
         
         setFormData({
