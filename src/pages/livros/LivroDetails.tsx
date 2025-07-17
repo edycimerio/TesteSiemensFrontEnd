@@ -9,8 +9,9 @@ import Loading from '../../components/Loading';
 const LivroDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showAlert, setLoading, loading } = useAppContext();
+  const { showAlert } = useAppContext();
   const [livro, setLivro] = useState<LivroDetalhesResponse | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
 
@@ -27,13 +28,30 @@ const LivroDetails: React.FC = () => {
     const fetchLivro = async () => {
       setLoading(true);
       try {
-        const response = await LivrosService.getDetalhes(parseInt(id));
+        const livroId = parseInt(id);
+        console.log(`Buscando detalhes do livro ${livroId}...`);
+        const response = await LivrosService.getDetalhes(livroId);
+        console.log('Resposta recebida:', response);
         // Usando type assertion para incluir os campos extras
         setLivro(response as LivroDetalhesResponseExtended);
         setError(null);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Erro ao carregar detalhes do livro:', err);
-        setError('Não foi possível carregar os detalhes do livro. Por favor, tente novamente mais tarde.');
+        
+        // Tratamento específico para diferentes tipos de erro
+        if (err.response) {
+          // O servidor respondeu com um status de erro
+          console.error(`Erro ${err.response.status}:`, err.response.data);
+          setError(`Erro ${err.response.status}: ${err.response.statusText}`);
+        } else if (err.request) {
+          // A requisição foi feita mas não houve resposta
+          console.error('Sem resposta do servidor:', err.request);
+          setError('Não foi possível conectar ao servidor. Verifique sua conexão.');
+        } else {
+          // Algo aconteceu na configuração da requisição
+          setError(`Erro: ${err.message}`);
+        }
+        
         showAlert('Não foi possível carregar os detalhes do livro.', 'error');
         setLivro(null);
       } finally {
@@ -42,7 +60,7 @@ const LivroDetails: React.FC = () => {
     };
 
     fetchLivro();
-  }, [id, setLoading, showAlert]);
+  }, [id, showAlert]);
 
   const handleDeleteClick = () => {
     setDeleteModalOpen(true);
@@ -88,8 +106,6 @@ const LivroDetails: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="page-title">{livro.titulo}</h1>
         <div className="btn-group">
-          <Link to={`/livros/editar/${livro.id}`} className="btn-secondary">Editar</Link>
-          <button onClick={handleDeleteClick} className="btn-danger">Excluir</button>
           <Link to="/livros" className="btn-secondary">Voltar</Link>
         </div>
       </div>

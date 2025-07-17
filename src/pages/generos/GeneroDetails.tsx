@@ -103,8 +103,6 @@ const GeneroDetails: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="page-title">{genero.nome}</h1>
         <div className="btn-group">
-          <Link to={`/generos/editar/${genero.id}`} className="btn-secondary">Editar</Link>
-          <button onClick={handleDeleteClick} className="btn-danger">Excluir</button>
           <Link to="/generos" className="btn-secondary">Voltar</Link>
         </div>
       </div>

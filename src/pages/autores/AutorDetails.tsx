@@ -111,8 +111,6 @@ const AutorDetails: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="page-title">{autor.nome}</h1>
         <div className="btn-group">
-          <Link to={`/autores/editar/${autor.id}`} className="btn-secondary">Editar</Link>
-          <button onClick={handleDeleteClick} className="btn-danger">Excluir</button>
           <Link to="/autores" className="btn-secondary">Voltar</Link>
         </div>
       </div>
