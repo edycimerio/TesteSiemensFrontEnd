@@ -13,6 +13,7 @@ const GenerosList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
   const [generoToDelete, setGeneroToDelete] = useState<number | null>(null);
 
@@ -29,6 +30,7 @@ const GenerosList: React.FC = () => {
       const response: GeneroPaginatedResponse = await GenerosService.getAll(currentPage, pageSize);
       setGeneros(response.items);
       setTotalPages(response.totalPages);
+      setTotalCount(response.totalCount);
       setError(null);
     } catch (err) {
       console.error('Erro ao carregar gêneros:', err);
@@ -77,7 +79,10 @@ const GenerosList: React.FC = () => {
   return (
     <div className="generos-list">
       <div className="flex justify-between items-center">
-        <h1 className="page-title">Gêneros</h1>
+        <div>
+          <h1 className="page-title">Gêneros</h1>
+          {totalCount > 0 && <p className="text-sm text-gray-600">Total: {totalCount} gênero(s)</p>}
+        </div>
         <Link to="/generos/novo" className="btn-primary">Novo Gênero</Link>
       </div>
 

@@ -13,6 +13,7 @@ const LivrosList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
   const [livroToDelete, setLivroToDelete] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -37,6 +38,7 @@ const LivrosList: React.FC = () => {
       
       setLivros(response.items);
       setTotalPages(response.totalPages);
+      setTotalCount(response.totalCount);
       setError(null);
     } catch (err) {
       console.error('Erro ao carregar livros:', err);
@@ -87,7 +89,10 @@ const LivrosList: React.FC = () => {
   return (
     <div className="livros-list">
       <div className="flex justify-between items-center">
-        <h1 className="page-title">Livros</h1>
+        <div>
+          <h1 className="page-title">Livros</h1>
+          {totalCount > 0 && <p className="text-sm text-gray-600">Total: {totalCount} livro(s)</p>}
+        </div>
         <Link to="/livros/novo" className="btn-primary">Novo Livro</Link>
       </div>
 

@@ -9,6 +9,7 @@ interface CachedAutor {
   page: number;
   data: AutorResponse;
   totalPages: number;
+  totalCount: number;
 }
 
 // Interface para o cache de gêneros com paginação
@@ -17,6 +18,7 @@ interface CachedGenero {
   page: number;
   data: GeneroResponse;
   totalPages: number;
+  totalCount: number;
 }
 
 // Interface para o cache de livros com paginação
@@ -25,6 +27,7 @@ interface CachedLivro {
   page: number;
   data: LivroResponse;
   totalPages: number;
+  totalCount: number;
 }
 
 interface AlertState {

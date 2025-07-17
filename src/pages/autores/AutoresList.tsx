@@ -14,6 +14,7 @@ const AutoresList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
   const [autorToDelete, setAutorToDelete] = useState<number | null>(null);
 
@@ -33,6 +34,7 @@ const AutoresList: React.FC = () => {
       // Usar dados do cache
       setAutores(cachedData.map(item => item.data));
       setTotalPages(cachedData[0].totalPages);
+      setTotalCount(cachedData[0].totalCount);
       return;
     }
     
@@ -44,6 +46,7 @@ const AutoresList: React.FC = () => {
       
       setAutores(response.items);
       setTotalPages(response.totalPages);
+      setTotalCount(response.totalCount);
       setError(null);
       
       // Atualizar o cache com os novos dados
@@ -51,7 +54,8 @@ const AutoresList: React.FC = () => {
         id: autor.id,
         page: currentPage,
         data: autor,
-        totalPages: response.totalPages
+        totalPages: response.totalPages,
+        totalCount: response.totalCount
       }));
       
       // Manter apenas os itens de outras páginas e adicionar os novos
@@ -134,7 +138,10 @@ const AutoresList: React.FC = () => {
   return (
     <div className="autores-list">
       <div className="flex justify-between items-center">
-        <h1 className="page-title">Autores</h1>
+        <div>
+          <h1 className="page-title">Autores</h1>
+          {totalCount > 0 && <p className="text-sm text-gray-600">Total: {totalCount} autor(es)</p>}
+        </div>
         <Link to="/autores/novo" className="btn-primary">Novo Autor</Link>
       </div>
 
