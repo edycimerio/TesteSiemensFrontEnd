@@ -19,10 +19,9 @@ const GenerosList: React.FC = () => {
 
   const pageSize = 10;
 
-  // Carregar gêneros ao montar o componente e quando a página mudar
+
   useEffect(() => {
     fetchGeneros();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const fetchGeneros = async () => {
@@ -59,7 +58,7 @@ const GenerosList: React.FC = () => {
     try {
       await GenerosService.delete(generoToDelete);
       showAlert('Gênero excluído com sucesso!', 'success');
-      fetchGeneros(); // Recarregar a lista após exclusão
+      fetchGeneros();
     } catch (err: any) {
       if (err.response && err.response.status === 400) {
         showAlert('Não é possível excluir o gênero pois existem livros associados a ele.', 'error');

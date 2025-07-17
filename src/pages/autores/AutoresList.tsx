@@ -19,10 +19,8 @@ const AutoresList: React.FC = () => {
 
   const pageSize = 10;
 
-  // Carregar autores ao montar o componente e quando a página mudar
   useEffect(() => {
     fetchAutores();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const fetchAutores = async () => {
@@ -59,8 +57,7 @@ const AutoresList: React.FC = () => {
     try {
       await AutoresService.delete(autorToDelete);
       showAlert('Autor excluído com sucesso!', 'success');
-      
-      fetchAutores(); // Recarregar a lista após exclusão
+      fetchAutores();
     } catch (err: any) {
       if (err.response && err.response.status === 400) {
         showAlert('Não é possível excluir o autor pois existem livros associados a ele.', 'error');
@@ -82,8 +79,6 @@ const AutoresList: React.FC = () => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
   };
-
-
 
   return (
     <div className="autores-list">

@@ -20,10 +20,8 @@ const LivrosList: React.FC = () => {
 
   const pageSize = 10;
 
-  // Carregar livros ao montar o componente e quando a página mudar
   useEffect(() => {
     fetchLivros();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const fetchLivros = async () => {
@@ -67,7 +65,7 @@ const LivrosList: React.FC = () => {
     try {
       await LivrosService.delete(livroToDelete);
       showAlert('Livro excluído com sucesso!', 'success');
-      fetchLivros(); // Recarregar a lista após exclusão
+      fetchLivros();
     } catch (err) {
       showAlert('Erro ao excluir livro. Por favor, tente novamente.', 'error');
     } finally {
@@ -83,7 +81,7 @@ const LivrosList: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentPage(1); // Resetar para a primeira página ao pesquisar
+    setCurrentPage(1);
     fetchLivros();
   };
 
