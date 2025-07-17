@@ -9,7 +9,8 @@ import Loading from '../../components/Loading';
 const GeneroDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showAlert, setLoading, loading } = useAppContext();
+  const { showAlert } = useAppContext();
+  const [loading, setLoading] = useState<boolean>(false);
   const [genero, setGenero] = useState<GeneroDetalhesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
@@ -20,12 +21,29 @@ const GeneroDetails: React.FC = () => {
     const fetchGenero = async () => {
       setLoading(true);
       try {
-        const response = await GenerosService.getDetalhes(parseInt(id));
+        const generoId = parseInt(id);
+        console.log(`Buscando detalhes do gênero ${generoId}...`);
+        const response = await GenerosService.getDetalhes(generoId);
+        console.log('Resposta recebida:', response);
         setGenero(response);
         setError(null);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Erro ao carregar detalhes do gênero:', err);
-        setError('Não foi possível carregar os detalhes do gênero. Por favor, tente novamente mais tarde.');
+        
+        // Tratamento específico para diferentes tipos de erro
+        if (err.response) {
+          // O servidor respondeu com um status de erro
+          console.error(`Erro ${err.response.status}:`, err.response.data);
+          setError(`Erro ${err.response.status}: ${err.response.statusText}`);
+        } else if (err.request) {
+          // A requisição foi feita mas não houve resposta
+          console.error('Sem resposta do servidor:', err.request);
+          setError('Não foi possível conectar ao servidor. Verifique sua conexão.');
+        } else {
+          // Algo aconteceu na configuração da requisição
+          setError(`Erro: ${err.message}`);
+        }
+        
         showAlert('Não foi possível carregar os detalhes do gênero.', 'error');
         setGenero(null);
       } finally {
@@ -34,7 +52,8 @@ const GeneroDetails: React.FC = () => {
     };
 
     fetchGenero();
-  }, [id, setLoading, showAlert]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, showAlert]);
 
   const handleDeleteClick = () => {
     setDeleteModalOpen(true);
@@ -109,17 +128,15 @@ const GeneroDetails: React.FC = () => {
               <tr>
                 <th>Título</th>
                 <th>Ano</th>
-                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {genero.livros.map(livro => (
                 <tr key={livro.id}>
-                  <td>{livro.titulo}</td>
-                  <td>{livro.ano}</td>
                   <td>
-                    <Link to={`/livros/${livro.id}`} className="btn-secondary">Detalhes</Link>
+                    <Link to={`/livros/${livro.id}`}>{livro.titulo}</Link>
                   </td>
+                  <td>{livro.ano}</td>
                 </tr>
               ))}
             </tbody>

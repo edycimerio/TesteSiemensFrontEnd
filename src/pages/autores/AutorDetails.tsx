@@ -137,17 +137,15 @@ const AutorDetails: React.FC = () => {
               <tr>
                 <th>Título</th>
                 <th>Ano</th>
-                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {autor.livros.map(livro => (
                 <tr key={livro.id}>
-                  <td>{livro.titulo}</td>
-                  <td>{livro.ano}</td>
                   <td>
-                    <Link to={`/livros/${livro.id}`} className="btn-secondary">Detalhes</Link>
+                    <Link to={`/livros/${livro.id}`}>{livro.titulo}</Link>
                   </td>
+                  <td>{livro.ano}</td>
                 </tr>
               ))}
             </tbody>

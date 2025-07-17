@@ -18,8 +18,13 @@ export const GenerosService = {
 
   // Obter detalhes do gênero (incluindo livros)
   getDetalhes: async (id: number): Promise<GeneroDetalhesResponse> => {
-    const response = await api.get(`${GENEROS_ENDPOINT}/${id}/detalhes`);
-    return response.data;
+    try {
+      const response = await api.get(`${GENEROS_ENDPOINT}/${id}/detalhes`);
+      return response.data;
+    } catch (error) {
+      console.error(`Erro ao obter detalhes do gênero ${id}:`, error);
+      throw error;
+    }
   },
 
   // Criar novo gênero
